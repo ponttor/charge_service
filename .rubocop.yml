@@ -1,0 +1,61 @@
+plugins:
+  - rubocop-minitest
+  - rubocop-performance
+
+AllCops:
+  NewCops: enable
+  TargetRubyVersion: 3.2
+  SuggestExtensions: false
+  Exclude:
+    - "tmp/**/*"
+    - "vendor/**/*"
+
+Style/Documentation:
+  Enabled: false
+
+Style/FrozenStringLiteralComment:
+  Enabled: false
+
+Minitest/MultipleAssertions:
+  Enabled: false
+
+Lint/EmptyBlock:
+  Exclude:
+    - "test/**/*"
+
+Lint/StructNewOverride:
+  Enabled: false
+
+Style/EmptyClassDefinition:
+  Enabled: false
+
+Naming/RescuedExceptionsVariableName:
+  Enabled: false
+
+Metrics/MethodLength:
+  Max: 20
+  Exclude:
+    - "test/**/*"
+
+Metrics/AbcSize:
+  Max: 25
+  Exclude:
+    - "test/**/*"
+
+Metrics/CyclomaticComplexity:
+  Max: 9
+
+Metrics/PerceivedComplexity:
+  Max: 9
+
+Metrics/ClassLength:
+  Max: 150
+  Exclude:
+    - "test/**/*"
+
+Metrics/BlockLength:
+  Exclude:
+    - "test/**/*"
+
+Metrics/ParameterLists:
+  CountKeywordArgs: false
