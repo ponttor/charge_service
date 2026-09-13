@@ -8,7 +8,9 @@ class PaymentEngine
 
     def transaction(&)
       @mutex.synchronize do
-        order_payments_before_transaction = @order_payments.transform_values { |order_payment| snapshot_order_payment(order_payment) }
+        order_payments_before_transaction = @order_payments.transform_values do |order_payment|
+          snapshot_order_payment(order_payment)
+        end
         reference_owners_before_transaction = @provider_reference_owners.dup
         committed = false
 
