@@ -18,9 +18,7 @@ class PaymentEngine
   def call(request_params)
     request = build_request!(request_params)
     reservation = @order_payment_registry.reserve(request)
-    return resolve_reservation(request, reservation) unless reservation.reserved?
-
-    execute_reserved_charge(request)
+    execute_reservation(request, reservation)
   end
 
   private
@@ -33,7 +31,13 @@ class PaymentEngine
     raise InvalidRequest, errors
   end
 
-  def execute_reserved_charge(request)
+  def execute_reservation(request, reservation)
+    return resolve_reservation(request, reservation) unless reservation.reserved?
+
+    perform_charge(request)
+  end
+
+  def perform_charge(request)
     log_event('charge_received', request)
     provider_result = @provider_gateway.charge(request)
     stored_result = @order_payment_registry.record_result(request.order_payment_key, provider_result)
@@ -69,6 +73,7 @@ require_relative 'payment_engine/payment_result'
 require_relative 'payment_engine/order_payment'
 require_relative 'payment_engine/event_logger'
 require_relative 'payment_engine/in_memory_order_payment_repository'
+require_relative 'payment_engine/provider_reference_guard'
 require_relative 'payment_engine/order_payment_registry'
 require_relative 'payment_engine/faraday_transport'
 require_relative 'payment_engine/provider_client'

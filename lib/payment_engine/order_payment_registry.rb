@@ -2,25 +2,13 @@ class PaymentEngine
   class OrderPaymentRegistry
     def initialize(repository)
       @repository = repository
+      @provider_reference_guard = ProviderReferenceGuard.new
     end
 
     def reserve(request)
       @repository.transaction do |repository|
         order_payment = repository.find_order_payment(request.order_payment_key)
-
-        unless order_payment
-          repository.save_order_payment(
-            OrderPayment.new(
-              order_payment_key: request.order_payment_key,
-              fingerprint: request.fingerprint
-            )
-          )
-          next OrderPayment::ReservationDecision.new(status: :reserved, result: nil)
-        end
-
-        reservation = order_payment.reserve(request.fingerprint)
-        repository.save_order_payment(order_payment) if reservation.reserved?
-        reservation
+        order_payment ? reserve_existing(repository, order_payment, request) : reserve_new(repository, request)
       end
     end
 
@@ -30,7 +18,7 @@ class PaymentEngine
         raise KeyError, "unknown order payment: #{order_payment_key.inspect}" unless order_payment
 
         order_payment.record_result(provider_result)
-        resolve_provider_reference_collision(repository, order_payment, provider_result)
+        @provider_reference_guard.resolve(repository, order_payment, provider_result)
         repository.save_order_payment(order_payment)
         order_payment.result
       end
@@ -38,27 +26,17 @@ class PaymentEngine
 
     private
 
-    def resolve_provider_reference_collision(repository, order_payment, provider_result)
-      colliding_owner = find_colliding_owner(repository, order_payment, provider_result)
-      return unless colliding_owner
-
-      mark_both_as_duplicate(repository, order_payment, colliding_owner)
+    def reserve_new(repository, request)
+      repository.save_order_payment(
+        OrderPayment.new(order_payment_key: request.order_payment_key, fingerprint: request.fingerprint)
+      )
+      OrderPayment::ReservationDecision.new(status: :reserved, result: nil)
     end
 
-    def find_colliding_owner(repository, order_payment, provider_result)
-      provider_reference = provider_result.provider_reference
-      return nil unless provider_reference
-
-      owner_key = repository.claim_provider_reference(provider_reference, order_payment.order_payment_key)
-      return nil if owner_key == order_payment.order_payment_key
-
-      repository.find_order_payment(owner_key)
-    end
-
-    def mark_both_as_duplicate(repository, order_payment, owner_order_payment)
-      order_payment.mark_unknown_due_to_duplicate_provider_reference!
-      owner_order_payment.mark_unknown_due_to_duplicate_provider_reference!
-      repository.save_order_payment(owner_order_payment)
+    def reserve_existing(repository, order_payment, request)
+      reservation = order_payment.reserve(request.fingerprint)
+      repository.save_order_payment(order_payment) if reservation.reserved?
+      reservation
     end
   end
 end

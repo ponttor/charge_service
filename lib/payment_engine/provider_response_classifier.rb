@@ -15,7 +15,10 @@ class PaymentEngine
       body = normalize_body(response.body)
       return classification(:unknown, error_code: malformed_body_code(response.body)) if body.nil?
 
-      response.status == 422 ? classify_http_422_response(body) : classify_http_200_response(body, request)
+      case response.status
+      when 422 then classify_http_422_response(body)
+      when 200 then classify_http_200_response(body, request)
+      end
     end
 
     private

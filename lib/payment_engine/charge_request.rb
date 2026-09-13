@@ -3,7 +3,6 @@ require 'openssl'
 require 'securerandom'
 
 class PaymentEngine
-  OrderPaymentKey = Data.define(:merchant_id, :order_id)
   REQUEST_FIELDS = %i[merchant_id order_id amount currency card_token].freeze
 
   ChargeRequest = Data.define(:merchant_id, :order_id, :amount, :currency, :card_token, :fingerprint,

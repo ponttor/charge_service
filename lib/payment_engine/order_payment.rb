@@ -1,4 +1,6 @@
 class PaymentEngine
+  OrderPaymentKey = Data.define(:merchant_id, :order_id)
+
   class OrderPayment
     ReservationDecision = Data.define(:status, :result) do
       def reserved?

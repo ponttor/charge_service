@@ -10,10 +10,6 @@ class PaymentEngine
     :error_code,
     :error_message
   ) do
-    alias_method :system_order_ref, :provider_reference
-    alias_method :threeds_url, :redirect_url
-    alias_method :reason, :error_code
-
     def retryable_failure?
       status == :retryable_failure
     end
